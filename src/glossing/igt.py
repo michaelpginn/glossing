@@ -3,14 +3,14 @@ from typing import Optional, List
 import re 
 from functools import reduce
 
-class IGTLine:
+class IGT:
     """A single line of IGT"""
 
     def __init__(self, 
                  transcription: str, 
-                 segmentation: Optional[str], 
-                 glosses: Optional[str],
-                 translation: Optional[str]):
+                 segmentation: Optional[str] = None, 
+                 glosses: Optional[str] = None,
+                 translation: Optional[str] = None):
         self.transcription = transcription
         self.segmentation = segmentation
         self.glosses = glosses
@@ -40,7 +40,7 @@ class IGTLine:
     def morphemes(self) -> Optional[List[str]]:
         """Returns the segmented list of morphemes, if possible"""
         if self.segmentation is None:
-            return None
+            raise ValueError("Cannot provide morphemes for non-segmented IGT!")
         return _tokenize_morpheme(self.segmentation)
 
     def __dict__(self):
