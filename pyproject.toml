@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "igt"
+name = "glossing"
 version = "0.0.1"
 authors = [
   { name="Michael Ginn", email="michael.ginn@colorado.edu" },
