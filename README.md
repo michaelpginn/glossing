@@ -10,9 +10,15 @@ from glossing import IGT
 
 example = IGT(transcription='los gatos corren',
               translation='the cats run',
-              glosses='DET.PL cat.PL run.3PL')
+              glosses='DET.PL cat-PL run-3PL')
 
 print(example.gloss_list)
-# ['DET', 'PL', '[SEP]', 'cat', 'PL', '[SEP]', 'run', '3PL']
+# ['DET.PL', '[SEP]', 'cat', 'PL', '[SEP]', 'run', '3PL']
+```
 
-
+## Building
+```shell
+> python -m build
+> python3 -m twine upload dist/*
+> rm -rf dist
+```
