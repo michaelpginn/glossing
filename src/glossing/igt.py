@@ -3,7 +3,7 @@ from typing import Optional, List
 import re 
 from functools import reduce
 
-DEFAULT_WORD_REGEX = r"(?<=\W|^)[\w?]+(?:[-=.])*[\w?]+(?=\W|$)"
+DEFAULT_WORD_REGEX = r"[\w?]+(?:[-=.])*[\w?]+"
 
 class IGT:
     """A single line of IGT"""
@@ -33,12 +33,12 @@ class IGT:
     def glosses_list(self)  -> List[str]:
         """Returns a list of the glosses, split by morphemes and including word boundaries"""
         glosses = [re.split("-", word) for word in self.word_glosses_list]
-        glosses = [[gloss.replace('.', '') for gloss in word_glosses if gloss != ''] for word_glosses in
-                    glosses]  # Remove empty glosses introduced by faulty segmentation
+        glosses = [[gloss for gloss in word_glosses if gloss != ''] for word_glosses in glosses]  # Remove empty glosses introduced by faulty segmentation
         glosses = [word_glosses for word_glosses in glosses if word_glosses != []]
         glosses = reduce(lambda a, b: a + ['[SEP]'] + b, glosses)  # Add separator for word boundaries
         return glosses
 
+    @property
     def morphemes_list(self) -> List[str]:
         """Returns the segmented list of morphemes, if possible"""
         if self.segmentation is None:
