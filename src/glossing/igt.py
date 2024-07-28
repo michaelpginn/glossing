@@ -33,11 +33,12 @@ class IGT:
     
     def __dict__(self):
         d = {'transcription': self.transcription, 'translation': self.translation}
-        if self.glosses is not None:
-            d['glosses'] = self.glosses_list
         if self.segmentation is not None:
             d['segmentation'] = self.segmentation
-            d['morphemes'] = self.morphemes_list
+        if self.glosses is not None:
+            d['glosses'] = self.glosses
+        if self.pos_glosses is not None:
+            d['pos_glosses'] = self.glosses
         return d
 
     def __repr__(self):
