@@ -1,1 +1,1 @@
-from igt import IGT
+from .igt import IGT

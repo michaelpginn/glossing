@@ -13,6 +13,6 @@ example = IGT(transcription='los gatos corren',
               glosses='DET.PL cat.PL run.3PL')
 
 print(example.gloss_list)
-# ['DET', 'PL', '[SEP]', 'cat', 'PL', '[SEP]', 'run', '3PL')
+# ['DET', 'PL', '[SEP]', 'cat', 'PL', '[SEP]', 'run', '3PL']
 
 

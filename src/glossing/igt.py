@@ -3,6 +3,8 @@ from typing import Optional, List
 import re 
 from functools import reduce
 
+DEFAULT_WORD_REGEX = r"(?<=\W|^)[\w?]+(?:[-=.])*[\w?]+(?=\W|$)"
+
 class IGT:
     """A single line of IGT"""
 
@@ -20,53 +22,40 @@ class IGT:
     def __repr__(self):
         return f"Trnsc:\t{self.transcription}\nSegm:\t{self.segmentation}\nGloss:\t{self.glosses}\nTrnsl:\t{self.translation}\n\n"
 
-    def gloss_list(self, segmented=False) -> Optional[List[str]]:
-        """Returns the gloss line of the IGT as a list.
-        :param segmented: If True, will return each morpheme gloss as a separate item.
-        """
+    @property
+    def word_glosses_list(self) -> List[str]:
+        """Returns a list of the glosses, split by words"""
         if self.glosses is None:
-            return []
-        if not segmented:
-            return self.glosses.split()
-        else:
-            words = re.split("\s+", self.glosses)
-            glosses = [re.split("-", word) for word in words]
-            glosses = [[gloss.replace('.', '') for gloss in word_glosses if gloss != ''] for word_glosses in
-                       glosses]  # Remove empty glosses introduced by faulty segmentation
-            glosses = [word_glosses for word_glosses in glosses if word_glosses != []]
-            glosses = reduce(lambda a, b: a + ['[SEP]'] + b, glosses)  # Add separator for word boundaries
-            return glosses
+            raise ValueError("`glosses` not set on example!")
+        return re.findall(DEFAULT_WORD_REGEX, self.glosses)
+    
+    @property
+    def glosses_list(self)  -> List[str]:
+        """Returns a list of the glosses, split by morphemes and including word boundaries"""
+        glosses = [re.split("-", word) for word in self.word_glosses_list]
+        glosses = [[gloss.replace('.', '') for gloss in word_glosses if gloss != ''] for word_glosses in
+                    glosses]  # Remove empty glosses introduced by faulty segmentation
+        glosses = [word_glosses for word_glosses in glosses if word_glosses != []]
+        glosses = reduce(lambda a, b: a + ['[SEP]'] + b, glosses)  # Add separator for word boundaries
+        return glosses
 
-    def morphemes(self) -> Optional[List[str]]:
+    def morphemes_list(self) -> List[str]:
         """Returns the segmented list of morphemes, if possible"""
         if self.segmentation is None:
             raise ValueError("Cannot provide morphemes for non-segmented IGT!")
-        return _tokenize_morpheme(self.segmentation)
+        words = re.findall(DEFAULT_WORD_REGEX, self.segmentation)
+        words = [word.split('-') for word in words]
+        words = [[morpheme for morpheme in word if morpheme != ''] for word in words] 
+        words = [word for word in words if word != []]
+        morphemes = reduce(lambda a,b: a + ['[SEP]'] + b, words)
+        return morphemes
 
     def __dict__(self):
         d = {'transcription': self.transcription, 'translation': self.translation}
         if self.glosses is not None:
-            d['glosses'] = self.gloss_list(segmented=self.should_segment)
+            d['glosses'] = self.glosses_list
         if self.segmentation is not None:
             d['segmentation'] = self.segmentation
-            d['morphemes'] = self.morphemes()
+            d['morphemes'] = self.morphemes_list
         return d
     
-
-def _tokenize_morpheme(str: str):
-    """Splits a string of morphemes by 
-
-    Args:
-        str (str): _description_
-
-    Returns:
-        _type_: _description_
-    """
-    word_regex = r"(?:[^.,!?;¿\s]|\?\?\?)+" # Matches any string not containing punctuation or whitespace
-
-    words = re.findall(word_regex, str)
-    words = [word.split('-') for word in words]
-    words = [[morpheme for morpheme in word if morpheme != ''] for word in words]  # Remove empty morphemes introduced by faulty segmentation
-    words = [word for word in words if word != []]
-    morphemes = reduce(lambda a,b: a + ['[SEP]'] + b, words)
-    return morphemes
