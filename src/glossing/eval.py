@@ -24,13 +24,13 @@ def evaluate_glosses(predicted_glosses: List[str], gold_glosses: List[str]):
 
     pred_word_glosses = [gloss_string_to_word_glosses(s) for s in predicted_glosses]
     gold_word_glosses = [gloss_string_to_word_glosses(s) for s in gold_glosses]
-    word_eval = eval_accuracy(pred_word_glosses, gold_word_glosses)
+    word_eval = _eval_accuracy(pred_word_glosses, gold_word_glosses)
 
     pred_morphemes = [gloss_string_to_morpheme_glosses(s) for s in predicted_glosses]
     gold_morphemes = [gloss_string_to_morpheme_glosses(s) for s in gold_glosses]
 
     return {'word_level': word_eval,
-            **eval_morpheme_glosses(pred_morphemes=pred_morphemes, gold_morphemes=gold_morphemes)}
+            **_eval_morpheme_glosses(pred_morphemes=pred_morphemes, gold_morphemes=gold_morphemes)}
     
 
 # def evaluate_igt(pred_path: str, gold_path: str):
@@ -52,12 +52,12 @@ def evaluate_glosses(predicted_glosses: List[str], gold_glosses: List[str]):
 
 
 chrf = evaluate.load('chrf')
-def eval_morpheme_glosses(
+def _eval_morpheme_glosses(
     pred_morphemes: List[List[str]], gold_morphemes: List[List[str]]
 ):
     """Evaluates the performance at the morpheme level"""
-    morpheme_eval = eval_accuracy(pred_morphemes, gold_morphemes)
-    class_eval = eval_stems_grams(pred_morphemes, gold_morphemes)
+    morpheme_eval = _eval_accuracy(pred_morphemes, gold_morphemes)
+    class_eval = _eval_stems_grams(pred_morphemes, gold_morphemes)
     bleu = bleu_score(pred_morphemes, [[line] for line in gold_morphemes])
 
     # chrf_score = chrf.compute(
@@ -67,7 +67,7 @@ def eval_morpheme_glosses(
     return {"morpheme_accuracy": morpheme_eval, "classes": class_eval, "bleu": bleu}
 
 
-def eval_accuracy(pred: List[List[str]], gold: List[List[str]]) -> dict:
+def _eval_accuracy(pred: List[List[str]], gold: List[List[str]]) -> dict:
     """Computes the average and overall accuracy, where predicted labels must be in the correct position in the list."""
     total_correct_predictions = 0
     total_tokens = 0
@@ -97,7 +97,7 @@ def eval_accuracy(pred: List[List[str]], gold: List[List[str]]) -> dict:
     return {'average_accuracy': average_accuracy, 'accuracy': overall_accuracy}
 
 
-def eval_stems_grams(pred: List[List[str]], gold: List[List[str]]) -> dict:
+def _eval_stems_grams(pred: List[List[str]], gold: List[List[str]]) -> dict:
     perf = {'stem': {'correct': 0, 'pred': 0, 'gold': 0}, 'gram': {'correct': 0, 'pred': 0, 'gold': 0}}
 
     for (entry_pred, entry_gold) in zip(pred, gold):
@@ -131,8 +131,8 @@ def eval_stems_grams(pred: List[List[str]], gold: List[List[str]]) -> dict:
     return {'stem': stem_perf, 'gram': gram_perf}
 
 
-def eval_word_glosses(pred_words: List[List[str]], gold_words: List[List[str]]):
+def _eval_word_glosses(pred_words: List[List[str]], gold_words: List[List[str]]):
     """Evaluates the performance at the morpheme level"""
-    word_eval = eval_accuracy(pred_words, gold_words)
+    word_eval = _eval_accuracy(pred_words, gold_words)
     bleu = bleu_score(pred_words, [[line] for line in gold_words])
     return {'word_level': word_eval, 'bleu': bleu}
