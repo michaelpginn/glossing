@@ -3,8 +3,6 @@ from typing import Optional, List, Dict
 import re 
 from functools import reduce
 
-DEFAULT_WORD_REGEX = r"[\w?]+(?:[-=.])*[\w?]+"
-
 class IGT:
     """A single line of IGT"""
 
@@ -50,15 +48,11 @@ class IGT:
         """Returns a list of the glosses, split by words"""
         if self.glosses is None:
             raise ValueError("`glosses` not set on example!")
-        return re.findall(DEFAULT_WORD_REGEX, self.glosses)
+        return gloss_string_to_word_glosses(self.glosses)
     
     @property
-    def glosses_list(self)  -> List[str]:
+    def glosses_list(self) -> List[str]:
         """Returns a list of the glosses, split by morphemes and including word boundaries"""
-        glosses = [re.split("-", word) for word in self.word_glosses_list]
-        glosses = [[gloss for gloss in word_glosses if gloss != ''] for word_glosses in glosses]  # Remove empty glosses introduced by faulty segmentation
-        glosses = [word_glosses for word_glosses in glosses if word_glosses != []]
-        glosses = reduce(lambda a, b: a + ['[SEP]'] + b, glosses)  # Add separator for word boundaries
         return glosses
 
     @property
@@ -75,3 +69,22 @@ class IGT:
 
     # endregion
     
+
+# Helper utils for splitting up glosses
+
+DEFAULT_WORD_REGEX = r"[\w?]+(?:[-=.])*[\w?]+"
+def gloss_string_to_word_glosses(gloss_string: str) -> List[str]:
+    return re.findall(DEFAULT_WORD_REGEX, gloss_string)
+
+def gloss_string_to_morpheme_glosses(gloss_string: str) -> List[str]:
+    word_glosses = gloss_string_to_word_glosses(gloss_string)
+    glosses = [re.split("-|=", word) for word in word_glosses]
+
+    # Remove empty glosses introduced by faulty segmentation
+    glosses = [[gloss for gloss in word_glosses if gloss != ''] for word_glosses in glosses]  
+    glosses = [word_glosses for word_glosses in glosses if word_glosses != []]
+
+    # Add separator for word boundaries
+    glosses = reduce(lambda a, b: a + ['[SEP]'] + b, glosses)  
+
+    return glosses
