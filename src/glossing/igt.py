@@ -1,5 +1,5 @@
 """Defines IGT model and convenience functions"""
-from typing import Optional, List
+from typing import Optional, List, Dict
 import re 
 from functools import reduce
 
@@ -12,16 +12,38 @@ class IGT:
                  transcription: str, 
                  segmentation: Optional[str] = None, 
                  glosses: Optional[str] = None,
+                 pos_glosses: Optional[str] = None,
                  translation: Optional[str] = None):
         self.transcription = transcription
         self.segmentation = segmentation
         self.glosses = glosses
+        self.pos_glosses = pos_glosses
         self.translation = translation
         self.should_segment = True
 
+    @classmethod
+    def from_dict(cls, d: Dict[str, Optional[str]]):
+        if "transcription" not in d or not isinstance(d['transcription'], str):
+            raise ValueError("Dict must contain `transcription` key at minimum!")
+        return cls(transcription=d["transcription"], # type: ignore
+                   segmentation=d.get("segmentation", None),
+                   glosses=d.get("glosses", None),
+                   pos_glosses=d.get("pos_glosses", None),
+                   translation=d.get("translation", None))
+    
+    def __dict__(self):
+        d = {'transcription': self.transcription, 'translation': self.translation}
+        if self.glosses is not None:
+            d['glosses'] = self.glosses_list
+        if self.segmentation is not None:
+            d['segmentation'] = self.segmentation
+            d['morphemes'] = self.morphemes_list
+        return d
+
     def __repr__(self):
         return f"Trnsc:\t{self.transcription}\nSegm:\t{self.segmentation}\nGloss:\t{self.glosses}\nTrnsl:\t{self.translation}\n\n"
-
+    
+    # region Convenience Properties
     @property
     def word_glosses_list(self) -> List[str]:
         """Returns a list of the glosses, split by words"""
@@ -50,12 +72,5 @@ class IGT:
         morphemes = reduce(lambda a,b: a + ['[SEP]'] + b, words)
         return morphemes
 
-    def __dict__(self):
-        d = {'transcription': self.transcription, 'translation': self.translation}
-        if self.glosses is not None:
-            d['glosses'] = self.glosses_list
-        if self.segmentation is not None:
-            d['segmentation'] = self.segmentation
-            d['morphemes'] = self.morphemes_list
-        return d
+    # endregion
     
