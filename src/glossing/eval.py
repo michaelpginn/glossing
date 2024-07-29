@@ -77,6 +77,8 @@ def _eval_accuracy(pred: List[List[str]], gold: List[List[str]]) -> dict:
         entry_correct_predictions = 0
 
         entry_gold_len = len([token for token in entry_gold if token != '[SEP]'])
+        if entry_gold_len == 0:
+            print("Uh oh", entry_gold)
 
         for token_index in range(len(entry_gold)):
             # For each token, check if it matches
