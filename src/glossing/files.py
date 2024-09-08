@@ -16,7 +16,7 @@ def load_igt_file(path: str) -> List[IGT]:
 
     ## Notes
     Files should be formatted as follows:
-    
+
     ```text
     \\t Transcription
     \\m Segmentation (optional)
@@ -53,7 +53,7 @@ def load_igt_file(path: str) -> List[IGT]:
         for line in file:
             # Determine the type of line
             # If we see a type that has already been filled for the current entry, something is wrong
-            line_prefix = line[:2]
+            line_prefix = line.strip()[:2]
             if line_prefix == '\\t' and current_entry["transcription"] == None:
                 current_entry["transcription"] = line[3:].strip()
             elif line_prefix == '\\m' and current_entry["segmentation"] == None:
