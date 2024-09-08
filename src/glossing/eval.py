@@ -1,11 +1,10 @@
 """Contains the evaluation scripts for comparing predicted and gold IGT"""
 
 from typing import List
-import json
 from torchtext.data.metrics import bleu_score
 import evaluate
 
-from .igt import IGT, gloss_string_to_word_glosses, gloss_string_to_morpheme_glosses
+from .igt import gloss_string_to_word_glosses, gloss_string_to_morpheme_glosses
 
 
 def evaluate_glosses(predicted_glosses: List[str], gold_glosses: List[str]):
