@@ -7,8 +7,8 @@ class TestIGT(unittest.TestCase):
         example = IGT(transcription='los gatos corren',
                       translation='the cats run',
                       glosses='DET.PL cat-PL run-3PL')
-        
-        self.assertRaises(ValueError, example.morphemes_list)
+
+        self.assertRaises(ValueError, lambda: example.morphemes_list)
         self.assertEqual(example.word_glosses_list, ['DET.PL', 'cat-PL', 'run-3PL'])
         self.assertEqual(example.glosses_list, ['DET.PL', '[SEP]', 'cat', 'PL', '[SEP]', 'run', '3PL'])
 

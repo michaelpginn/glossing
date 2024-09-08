@@ -8,8 +8,8 @@ from .igt import gloss_string_to_word_glosses, gloss_string_to_morpheme_glosses
 
 
 def evaluate_glosses(predicted_glosses: List[str], gold_glosses: List[str]):
-    """Runs evaluation over paired lists of glosses. 
-    
+    """Runs evaluation over paired lists of glosses.
+
     Expects all glosses to be in the string format such as
 
     ```text
@@ -30,7 +30,7 @@ def evaluate_glosses(predicted_glosses: List[str], gold_glosses: List[str]):
 
     return {'word_level': word_eval,
             **_eval_morpheme_glosses(pred_morphemes=pred_morphemes, gold_morphemes=gold_morphemes)}
-    
+
 
 # def evaluate_igt(pred_path: str, gold_path: str):
 #     """Performs evaluation of a predicted IGT file"""
@@ -76,6 +76,9 @@ def _eval_accuracy(pred: List[List[str]], gold: List[List[str]]) -> dict:
         entry_correct_predictions = 0
 
         entry_gold_len = len([token for token in entry_gold if token != '[SEP]'])
+
+        if entry_gold_len == 0:
+            raise ValueError(f"Found empty gold entry at position {i}:", entry_gold)
 
         for token_index in range(len(entry_gold)):
             # For each token, check if it matches
