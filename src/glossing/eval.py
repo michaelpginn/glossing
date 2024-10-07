@@ -32,24 +32,6 @@ def evaluate_glosses(predicted_glosses: List[str], gold_glosses: List[str]):
             **_eval_morpheme_glosses(pred_morphemes=pred_morphemes, gold_morphemes=gold_morphemes)}
 
 
-# def evaluate_igt(pred_path: str, gold_path: str):
-#     """Performs evaluation of a predicted IGT file"""
-
-#     pred = load_igt_file(pred_path)
-#     gold = load_igt_file(gold_path)
-
-#     pred_words = [line.word_glosses_list for line in pred]
-#     gold_words = [line.word_glosses_list for line in gold]
-#     word_eval = eval_accuracy(pred_words, gold_words)
-
-#     pred_morphemes = [line.glosses_list for line in pred]
-#     gold_morphemes = [line.glosses_list for line in gold]
-
-#     all_eval = {'word_level': word_eval,
-#                 **eval_morpheme_glosses(pred_morphemes=pred_morphemes, gold_morphemes=gold_morphemes)}
-#     print(json.dumps(all_eval, sort_keys=True, indent=4))
-
-
 chrf = evaluate.load('chrf')
 def _eval_morpheme_glosses(
     pred_morphemes: List[List[str]], gold_morphemes: List[List[str]]
