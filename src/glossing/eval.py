@@ -1,9 +1,9 @@
 """Contains the evaluation scripts for comparing predicted and gold IGT"""
 
 from typing import List
-from torchtext.data.metrics import bleu_score
 import evaluate
 
+from .bleu import bleu_score
 from .igt import gloss_string_to_word_glosses, gloss_string_to_morpheme_glosses
 
 
@@ -40,10 +40,6 @@ def _eval_morpheme_glosses(
     morpheme_eval = _eval_accuracy(pred_morphemes, gold_morphemes)
     class_eval = _eval_stems_grams(pred_morphemes, gold_morphemes)
     bleu = bleu_score(pred_morphemes, [[line] for line in gold_morphemes])
-
-    # chrf_score = chrf.compute(
-    #     predictions=pred_morphemes, references=[[[morpheme] for morpheme in sequence] for sequence in gold_morphemes], word_order=2
-    # )
 
     return {"morpheme_accuracy": morpheme_eval, "classes": class_eval, "bleu": bleu}
 
