@@ -1,5 +1,5 @@
 """Defines IGT model and convenience functions"""
-from typing import Any, Optional, List, Dict, override
+from typing import Any, Optional, List, Dict
 import re
 from functools import reduce
 
