@@ -1,5 +1,5 @@
 """Defines IGT model and convenience functions"""
-from typing import Optional, List, Dict
+from typing import Any, Optional, List, Dict, override
 import re
 from functools import reduce
 
@@ -29,7 +29,7 @@ class IGT:
                    pos_glosses=d.get("pos_glosses", None),
                    translation=d.get("translation", None))
 
-    def __dict__(self):
+    def __dict__(self) -> dict[str, Any]:
         d = {'transcription': self.transcription, 'translation': self.translation}
         if self.segmentation is not None:
             d['segmentation'] = self.segmentation
@@ -53,7 +53,9 @@ class IGT:
     @property
     def glosses_list(self) -> List[str]:
         """Returns a list of the glosses, split by morphemes and including word boundaries"""
-        return glosses
+        if self.glosses is None:
+            raise ValueError("`glosses` not set on example!")
+        return gloss_string_to_morpheme_glosses(self.glosses)
 
     @property
     def morphemes_list(self) -> List[str]:
