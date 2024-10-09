@@ -46,7 +46,7 @@ def load_igt_file(path: str) -> List[IGT]:
         empty_entry: Dict[str, Optional[str]] = {"transcription": None,
                                                  "segmentation": None,
                                                  "glosses": None,
-                                                 "pos": None,
+                                                 "pos_glosses": None,
                                                  "translation": None}
         current_entry = empty_entry.copy()
 
@@ -61,9 +61,9 @@ def load_igt_file(path: str) -> List[IGT]:
             elif line_prefix == '\\g' and current_entry["glosses"] == None:
                 if len(line[3:].strip()) > 0:
                     current_entry["glosses"] = line[3:].strip()
-            elif line_prefix == '\\p' and current_entry["pos"] == None:
+            elif line_prefix == '\\p' and current_entry["pos_glosses"] == None:
                 if len(line[3:].strip()) > 0:
-                    current_entry["pos"] = line[3:].strip()
+                    current_entry["pos_glosses"] = line[3:].strip()
             elif line_prefix == '\\l' and current_entry["translation"] == None:
                 current_entry["translation"] = line[3:].strip()
                 # Once we have the translation, we've reached the end and can save this entry
