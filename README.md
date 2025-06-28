@@ -1,4 +1,5 @@
 # `glossing`
+
 Simple utilities and models for handling interlinear glossed text (IGT) in Python. Useful for training models for IGT generation.
 
 ```shell
@@ -17,7 +18,9 @@ print(example.gloss_list)
 ```
 
 ## Building
+
 ```shell
+> pip install -e ".[dev]"
 > python -m build
 > python3 -m twine upload dist/*
 > rm -rf dist
