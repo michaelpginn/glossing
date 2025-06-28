@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Optional, Mapping
+from typing import Dict, List, Optional
 
 from .igt import IGT
 
@@ -42,29 +42,31 @@ def load_igt_file(path: str) -> List[IGT]:
         return all_data
 
     # If we have one file, read in line by line
-    with open(path, 'r') as file:
-        empty_entry: Dict[str, Optional[str]] = {"transcription": None,
-                                                 "segmentation": None,
-                                                 "glosses": None,
-                                                 "pos_glosses": None,
-                                                 "translation": None}
+    with open(path, "r") as file:
+        empty_entry: Dict[str, Optional[str]] = {
+            "transcription": None,
+            "segmentation": None,
+            "glosses": None,
+            "pos_glosses": None,
+            "translation": None,
+        }
         current_entry = empty_entry.copy()
 
         for line in file:
             # Determine the type of line
             # If we see a type that has already been filled for the current entry, something is wrong
             line_prefix = line.strip()[:2]
-            if line_prefix == '\\t' and current_entry["transcription"] == None:
+            if line_prefix == "\\t" and current_entry["transcription"] is None:
                 current_entry["transcription"] = line[3:].strip()
-            elif line_prefix == '\\m' and current_entry["segmentation"] == None:
+            elif line_prefix == "\\m" and current_entry["segmentation"] is None:
                 current_entry["segmentation"] = line[3:].strip()
-            elif line_prefix == '\\g' and current_entry["glosses"] == None:
+            elif line_prefix == "\\g" and current_entry["glosses"] is None:
                 if len(line[3:].strip()) > 0:
                     current_entry["glosses"] = line[3:].strip()
-            elif line_prefix == '\\p' and current_entry["pos_glosses"] == None:
+            elif line_prefix == "\\p" and current_entry["pos_glosses"] is None:
                 if len(line[3:].strip()) > 0:
                     current_entry["pos_glosses"] = line[3:].strip()
-            elif line_prefix == '\\l' and current_entry["translation"] == None:
+            elif line_prefix == "\\l" and current_entry["translation"] is None:
                 current_entry["translation"] = line[3:].strip()
                 # Once we have the translation, we've reached the end and can save this entry
                 all_data.append(IGT.from_dict(current_entry))
