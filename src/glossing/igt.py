@@ -98,6 +98,8 @@ def gloss_string_to_morpheme_glosses(gloss_string: str) -> List[str]:
     glosses = [word_glosses for word_glosses in glosses if word_glosses != []]
 
     # Add separator for word boundaries
-    glosses = reduce(lambda a, b: a + ["[SEP]"] + b, glosses)
+    glosses = (
+        reduce(lambda a, b: a + ["[SEP]"] + b, glosses) if len(glosses) > 0 else []
+    )
 
     return glosses
