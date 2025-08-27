@@ -80,7 +80,7 @@ class IGT:
 
 # Helper utils for splitting up glosses
 
-DEFAULT_WORD_REGEX = r"[\w?]+(?:[-=.])*[\w?]+|\w"
+DEFAULT_WORD_REGEX = r"[\w?]+(?:[-=.\w?])*[\w?]+|\w"
 
 
 def gloss_string_to_word_glosses(gloss_string: str) -> List[str]:
@@ -92,10 +92,10 @@ def gloss_string_to_morpheme_glosses(gloss_string: str) -> List[str]:
     glosses = [re.split("-|=", word) for word in word_glosses]
 
     # Remove empty glosses introduced by faulty segmentation
-    glosses = [
-        [gloss for gloss in word_glosses if gloss != ""] for word_glosses in glosses
-    ]
-    glosses = [word_glosses for word_glosses in glosses if word_glosses != []]
+    # glosses = [
+    #     [gloss for gloss in word_glosses if gloss != ""] for word_glosses in glosses
+    # ]
+    # glosses = [word_glosses for word_glosses in glosses if word_glosses != []]
 
     # Add separator for word boundaries
     glosses = (
