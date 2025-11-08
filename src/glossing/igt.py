@@ -8,6 +8,9 @@ from typing import Any, Dict, List, Optional
 class IGT:
     """A single line of IGT"""
 
+    SEP_TOKEN = "[SEP]"
+    UNK_TOKEN = "[UNK]"
+
     def __init__(
         self,
         transcription: str,
@@ -72,7 +75,7 @@ class IGT:
         words = [word.split("-") for word in words]
         words = [[morpheme for morpheme in word if morpheme != ""] for word in words]
         words = [word for word in words if word != []]
-        morphemes = reduce(lambda a, b: a + ["[SEP]"] + b, words)
+        morphemes = reduce(lambda a, b: a + [IGT.SEP_TOKEN] + b, words)
         return morphemes
 
     # endregion
@@ -99,7 +102,9 @@ def gloss_string_to_morpheme_glosses(gloss_string: str) -> List[str]:
 
     # Add separator for word boundaries
     glosses = (
-        reduce(lambda a, b: a + ["[SEP]"] + b, glosses) if len(glosses) > 0 else []
+        reduce(lambda a, b: a + [IGT.SEP_TOKEN] + b, glosses)
+        if len(glosses) > 0
+        else []
     )
 
     return glosses

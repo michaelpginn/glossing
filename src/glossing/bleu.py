@@ -1,12 +1,14 @@
+import math
 from collections import Counter
 from functools import reduce
-import math
 from statistics import geometric_mean
 from typing import cast
 
+
 def _compute_ngrams(sentence: list[str], n: int):
     for i in range(0, len(sentence) - n + 1):
-        yield tuple(sentence[i:i+n])
+        yield tuple(sentence[i : i + n])
+
 
 def bleu_score(
     candidates: list[list[str]],
@@ -21,34 +23,48 @@ def bleu_score(
         max_ngram_order: int
     """
     if len(candidates) != len(references):
-        raise ValueError(f"Length of candidates ({len(candidates)}) and references ({len(references)}) must match!")
+        raise ValueError(
+            f"Length of candidates ({len(candidates)}) and references ({len(references)}) must match!"
+        )
 
     # 1. Compute modified n-gram precisions
     all_precisions: list[float] = []
-    smooth_value = 1.
+    smooth_value = 1.0
     for ngram_order in range(1, max_ngram_order + 1):
         # For computing precision
         n_gram_matches = 0
-        total_n_grams = 0
+        total_candidate_grams = 0
+        found_reference_ngram = False  # Set to True as soon as see a long enough sentence to have any ngrams for this n
 
         for candidate, reference in zip(candidates, references):
             candidate_grams = Counter(_compute_ngrams(candidate, ngram_order))
-            total_n_grams += candidate_grams.total()
 
             # Compute the reference grams, taking the max count for each ngram across references
-            reference_grams = reduce(Counter.__or__, (Counter(_compute_ngrams(r, ngram_order)) for r in reference))
+            reference_grams = reduce(
+                Counter.__or__,
+                (Counter(_compute_ngrams(r, ngram_order)) for r in reference),
+            )
+            if len(reference_grams) > 0:
+                found_reference_ngram = True
 
+            total_candidate_grams += candidate_grams.total()
             for gram, candidate_count in candidate_grams.items():
                 n_gram_matches += min(candidate_count, reference_grams.get(gram, 0))
 
+        # No candidate grams, either we predicted badly or the n is bigger than the refs
+        if total_candidate_grams == 0:
+            if found_reference_ngram:
+                all_precisions.append(0)
+            break
+
         if n_gram_matches == 0:
             smooth_value *= 2
-            precision = 100. / (smooth_value * total_n_grams)
+            precision = 100.0 / (smooth_value * total_candidate_grams)
         else:
-            precision = 100. * n_gram_matches / total_n_grams
+            precision = 100.0 * n_gram_matches / total_candidate_grams
         all_precisions.append(precision)
-    print(all_precisions)
-    mean_precision = geometric_mean(all_precisions)
+
+    mean_precision = min(geometric_mean(all_precisions), 100)
 
     # 2. Compute brevity penalty
     candidate_corpus_length = sum((len(c) for c in candidates))
@@ -58,14 +74,16 @@ def bleu_score(
         can_len = len(candidate)
         reference_lengths: list[int] = [len(r) for r in reference]
         best_match_length: int = reduce(
-            lambda ref_len1, ref_len2: ref_len1 if abs(cast(int, ref_len1) - can_len) < abs(ref_len2 - can_len) else ref_len2,
+            lambda ref_len1, ref_len2: ref_len1
+            if abs(cast(int, ref_len1) - can_len) < abs(ref_len2 - can_len)
+            else ref_len2,
             reference_lengths[1:],
-            reference_lengths[0]
+            reference_lengths[0],
         )
         reference_corpus_length += best_match_length
     brevity_penalty: float = (
-        1.0 if candidate_corpus_length > reference_corpus_length
+        1.0
+        if candidate_corpus_length > reference_corpus_length
         else math.exp(1 - (reference_corpus_length / candidate_corpus_length))
     )
-
     return brevity_penalty * mean_precision

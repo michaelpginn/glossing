@@ -17,11 +17,17 @@ print(example.gloss_list)
 # ['DET.PL', '[SEP]', 'cat', 'PL', '[SEP]', 'run', '3PL']
 ```
 
-## Building
+## Development
 
 ```shell
-> pip install -e ".[dev]"
-> python -m build
-> python3 -m twine upload dist/*
-> rm -rf dist
+# Build and submit to PyPi
+pip install -e ".[dev]"
+python -m build
+python3 -m twine upload dist/*
+rm -rf dist
+```
+
+```shell
+# Run tests
+python -m unittest
 ```

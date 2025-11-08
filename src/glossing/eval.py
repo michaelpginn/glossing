@@ -3,7 +3,7 @@
 from typing import List
 
 from .bleu import bleu_score
-from .igt import gloss_string_to_morpheme_glosses, gloss_string_to_word_glosses
+from .igt import IGT, gloss_string_to_morpheme_glosses, gloss_string_to_word_glosses
 
 
 def evaluate_glosses(predicted_glosses: List[str], gold_glosses: List[str]):
@@ -16,6 +16,12 @@ def evaluate_glosses(predicted_glosses: List[str], gold_glosses: List[str]):
     ```
 
     where words are separated with spaces and morphemes are separated with dashes '-' or equals '='
+
+    Returns the following metrics at both the morpheme and word level:
+        - `accuracy`: the micro (over whole corpus) and macro (averaged over sentences) accuracy, skipping [SEP] tokens
+        - `bleu`: the blue score (max 4-grams), where words/morphemes are atomic units for n-grams
+        - `error_rate`: the error rate under levenshtein distance, computed at the word/morpheme/character level
+        - `classes` (morphemes only): the precision, recall, and f1 for stem and gram morphemes
     """
     if len(predicted_glosses) != len(gold_glosses):
         raise ValueError(
@@ -24,31 +30,34 @@ def evaluate_glosses(predicted_glosses: List[str], gold_glosses: List[str]):
 
     pred_word_glosses = [gloss_string_to_word_glosses(s) for s in predicted_glosses]
     gold_word_glosses = [gloss_string_to_word_glosses(s) for s in gold_glosses]
-    word_eval = _eval_accuracy(pred_word_glosses, gold_word_glosses)
 
     pred_morphemes = [gloss_string_to_morpheme_glosses(s) for s in predicted_glosses]
     gold_morphemes = [gloss_string_to_morpheme_glosses(s) for s in gold_glosses]
 
     return {
-        "word_level": word_eval,
-        **_eval_morpheme_glosses(
-            pred_morphemes=pred_morphemes, gold_morphemes=gold_morphemes
-        ),
+        "words": {
+            "accuracy": _accuracy(pred_word_glosses, gold_word_glosses),
+            "bleu": bleu_score(
+                pred_word_glosses, [[line] for line in gold_word_glosses]
+            ),
+            "error_rate": _error_rate(pred_word_glosses, gold_word_glosses),
+        },
+        "morphemes": {
+            "accuracy": _accuracy(pred_morphemes, gold_morphemes),
+            "classes": _f1_stems_grams(pred_morphemes, gold_morphemes),
+            "bleu": bleu_score(pred_morphemes, [[line] for line in gold_morphemes]),
+            "error_rate": _error_rate(pred_morphemes, gold_morphemes),
+        },
+        "characters": {
+            "error_rate": _error_rate(
+                [list(s) for s in predicted_glosses],
+                [list(s) for s in gold_morphemes],
+            ),
+        },
     }
 
 
-def _eval_morpheme_glosses(
-    pred_morphemes: List[List[str]], gold_morphemes: List[List[str]]
-):
-    """Evaluates the performance at the morpheme level"""
-    morpheme_eval = _eval_accuracy(pred_morphemes, gold_morphemes)
-    class_eval = _eval_stems_grams(pred_morphemes, gold_morphemes)
-    bleu = bleu_score(pred_morphemes, [[line] for line in gold_morphemes])
-
-    return {"morpheme_accuracy": morpheme_eval, "classes": class_eval, "bleu": bleu}
-
-
-def _eval_accuracy(pred: List[List[str]], gold: List[List[str]]) -> dict:
+def _accuracy(pred: List[List[str]], gold: List[List[str]]) -> dict:
     """Computes the average and overall accuracy, where predicted labels must be in the correct position in the list."""
     total_correct_predictions = 0
     total_tokens = 0
@@ -57,8 +66,7 @@ def _eval_accuracy(pred: List[List[str]], gold: List[List[str]]) -> dict:
     for entry_pred, entry_gold, i in zip(pred, gold, range(len(gold))):
         entry_correct_predictions = 0
 
-        entry_gold_len = len([token for token in entry_gold if token != "[SEP]"])
-
+        entry_gold_len = len([token for token in entry_gold if token != IGT.SEP_TOKEN])
         if entry_gold_len == 0:
             raise ValueError(f"Found empty gold entry at position {i}:", entry_gold)
 
@@ -67,7 +75,7 @@ def _eval_accuracy(pred: List[List[str]], gold: List[List[str]]) -> dict:
             if (
                 token_index < len(entry_pred)
                 and entry_pred[token_index] == entry_gold[token_index]
-                and entry_gold[token_index] not in ["[UNK]", "[SEP]"]
+                and entry_gold[token_index] not in [IGT.UNK_TOKEN, IGT.SEP_TOKEN]
             ):
                 entry_correct_predictions += 1
 
@@ -80,10 +88,10 @@ def _eval_accuracy(pred: List[List[str]], gold: List[List[str]]) -> dict:
     total_entries = len(gold)
     average_accuracy = summed_accuracies / total_entries
     overall_accuracy = total_correct_predictions / total_tokens
-    return {"average_accuracy": average_accuracy, "accuracy": overall_accuracy}
+    return {"macro": average_accuracy, "micro": overall_accuracy}
 
 
-def _eval_stems_grams(pred: List[List[str]], gold: List[List[str]]) -> dict:
+def _f1_stems_grams(pred: List[List[str]], gold: List[List[str]]) -> dict:
     perf = {
         "stem": {"correct": 0, "pred": 0, "gold": 0},
         "gram": {"correct": 0, "pred": 0, "gold": 0},
@@ -141,8 +149,27 @@ def _eval_stems_grams(pred: List[List[str]], gold: List[List[str]]) -> dict:
     return {"stem": stem_perf, "gram": gram_perf}
 
 
-def _eval_word_glosses(pred_words: List[List[str]], gold_words: List[List[str]]):
-    """Evaluates the performance at the morpheme level"""
-    word_eval = _eval_accuracy(pred_words, gold_words)
-    bleu = bleu_score(pred_words, [[line] for line in gold_words])
-    return {"word_level": word_eval, "bleu": bleu}
+def _error_rate(pred: List[List[str]], gold: List[List[str]]) -> float:
+    def _normalized_edit_dist(pred: List[str], gold: List[str]):
+        """DP edit distance as in https://en.wikipedia.org/wiki/Levenshtein_distance"""
+        pred = [p for p in pred if p != IGT.SEP_TOKEN]
+        gold = [g for g in gold if g != IGT.SEP_TOKEN]
+        dists = [[0 for _ in range(len(gold))] for _ in range(len(pred))]
+
+        for i in range(1, len(pred)):
+            dists[i][0] = i
+        for j in range(1, len(gold)):
+            dists[0][j] = j
+
+        for j in range(1, len(gold)):
+            for i in range(1, len(pred)):
+                subst_cost = 0 if pred[i] == gold[j] else 1
+                dists[i][j] = min(
+                    dists[i - 1][j] + 1,
+                    dists[i][j - 1] + 1,
+                    dists[i - 1][j - 1] + subst_cost,
+                )
+        return dists[-1][-1] / len(gold)
+
+    edit_dists = [_normalized_edit_dist(p, g) for p, g in zip(pred, gold)]
+    return sum(edit_dists) / len(edit_dists)
