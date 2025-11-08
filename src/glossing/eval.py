@@ -2,7 +2,8 @@
 
 from typing import List
 
-from .bleu import bleu_score
+from glossing.bleu import bleu_score
+
 from .igt import IGT, gloss_string_to_morpheme_glosses, gloss_string_to_word_glosses
 
 
@@ -20,7 +21,7 @@ def evaluate_glosses(predicted_glosses: List[str], gold_glosses: List[str]):
     Returns the following metrics at both the morpheme and word level:
         - `accuracy`: the micro (over whole corpus) and macro (averaged over sentences) accuracy, skipping [SEP] tokens
         - `bleu`: the blue score (max 4-grams), where words/morphemes are atomic units for n-grams
-        - `error_rate`: the error rate under levenshtein distance, computed at the word/morpheme/character level
+        - `error_rate`: the error rate under levenshtein distance, computed at the word/morpheme/character level, skipping [SEP] tokens
         - `classes` (morphemes only): the precision, recall, and f1 for stem and gram morphemes
     """
     if len(predicted_glosses) != len(gold_glosses):
@@ -51,7 +52,7 @@ def evaluate_glosses(predicted_glosses: List[str], gold_glosses: List[str]):
         "characters": {
             "error_rate": _error_rate(
                 [list(s) for s in predicted_glosses],
-                [list(s) for s in gold_morphemes],
+                [list(s) for s in gold_glosses],
             ),
         },
     }
@@ -149,7 +150,7 @@ def _f1_stems_grams(pred: List[List[str]], gold: List[List[str]]) -> dict:
     return {"stem": stem_perf, "gram": gram_perf}
 
 
-def _error_rate(pred: List[List[str]], gold: List[List[str]]) -> float:
+def _error_rate(preds: List[List[str]], golds: List[List[str]]) -> float:
     def _normalized_edit_dist(pred: List[str], gold: List[str]):
         """DP edit distance as in https://en.wikipedia.org/wiki/Levenshtein_distance"""
         pred = [p for p in pred if p != IGT.SEP_TOKEN]
@@ -171,5 +172,5 @@ def _error_rate(pred: List[List[str]], gold: List[List[str]]) -> float:
                 )
         return dists[-1][-1] / len(gold)
 
-    edit_dists = [_normalized_edit_dist(p, g) for p, g in zip(pred, gold)]
+    edit_dists = [_normalized_edit_dist(p, g) for p, g in zip(preds, golds)]
     return sum(edit_dists) / len(edit_dists)
