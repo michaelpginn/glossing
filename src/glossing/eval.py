@@ -155,15 +155,15 @@ def _error_rate(preds: List[List[str]], golds: List[List[str]]) -> float:
         """DP edit distance as in https://en.wikipedia.org/wiki/Levenshtein_distance"""
         pred = [p for p in pred if p != IGT.SEP_TOKEN]
         gold = [g for g in gold if g != IGT.SEP_TOKEN]
-        dists = [[0 for _ in range(len(gold))] for _ in range(len(pred))]
+        dists = [[0 for _ in range(len(gold) + 1)] for _ in range(len(pred) + 1)]
 
-        for i in range(1, len(pred)):
+        for i in range(1, len(pred) + 1):
             dists[i][0] = i
-        for j in range(1, len(gold)):
+        for j in range(1, len(gold) + 1):
             dists[0][j] = j
 
-        for j in range(1, len(gold)):
-            for i in range(1, len(pred)):
+        for j in range(1, len(gold) + 1):
+            for i in range(1, len(pred) + 1):
                 subst_cost = 0 if pred[i] == gold[j] else 1
                 dists[i][j] = min(
                     dists[i - 1][j] + 1,
