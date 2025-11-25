@@ -164,7 +164,7 @@ def _error_rate(preds: List[List[str]], golds: List[List[str]]) -> float:
 
         for j in range(1, len(gold) + 1):
             for i in range(1, len(pred) + 1):
-                subst_cost = 0 if pred[i] == gold[j] else 1
+                subst_cost = 0 if pred[i - 1] == gold[j - 1] else 1
                 dists[i][j] = min(
                     dists[i - 1][j] + 1,
                     dists[i][j - 1] + 1,
