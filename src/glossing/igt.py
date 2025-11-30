@@ -83,7 +83,7 @@ class IGT:
 
 # Helper utils for splitting up glosses
 
-DEFAULT_WORD_REGEX = r"[\w?]+(?:[-=.\w?'])*[\w?]+|\w"
+DEFAULT_WORD_REGEX = r"[\w?]+(?:[-=.\w?'/])*[\w?]+|\w"
 
 
 def gloss_string_to_word_glosses(gloss_string: str) -> List[str]:
