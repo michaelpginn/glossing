@@ -152,7 +152,7 @@ def _f1_stems_grams(pred: List[List[str]], gold: List[List[str]]) -> dict:
 
 def _error_rate(preds: List[List[str]], golds: List[List[str]]) -> float:
     def _normalized_edit_dist(pred: List[str], gold: List[str]):
-        """DP edit distance as in https://en.wikipedia.org/wiki/Levenshtein_distance"""
+        """DP edit distance (clamped at 1) as in https://en.wikipedia.org/wiki/Levenshtein_distance"""
         pred = [p for p in pred if p != IGT.SEP_TOKEN]
         gold = [g for g in gold if g != IGT.SEP_TOKEN]
         if len(pred) == 0:
@@ -175,7 +175,8 @@ def _error_rate(preds: List[List[str]], golds: List[List[str]]) -> float:
                     dists[i][j - 1] + 1,
                     dists[i - 1][j - 1] + subst_cost,
                 )
-        return dists[-1][-1] / len(gold)
+        edit_dist = dists[-1][-1] / len(gold)
+        return min(edit_dist, 1)
 
     edit_dists = [_normalized_edit_dist(p, g) for p, g in zip(preds, golds)]
     return sum(edit_dists) / len(edit_dists)
