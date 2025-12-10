@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "glossing"
-version = "1.0.6"
+version = "1.0.8"
 authors = [{ name = "Michael Ginn", email = "michael.ginn@colorado.edu" }]
 description = "Python manipulation of interlinear glossed text"
 readme = "README.md"

@@ -1,8 +1,9 @@
 """Defines IGT model and convenience functions"""
 
-import re
 from functools import reduce
 from typing import Any, Dict, List, Optional
+
+import regex as re
 
 
 class IGT:
@@ -71,7 +72,7 @@ class IGT:
         """Returns the segmented list of morphemes, if possible"""
         if self.segmentation is None:
             raise ValueError("Cannot provide morphemes for non-segmented IGT!")
-        words = re.findall(DEFAULT_WORD_REGEX, self.segmentation)
+        words = gloss_string_to_word_glosses(self.segmentation)
         words = [word.split("-") for word in words]
         words = [[morpheme for morpheme in word if morpheme != ""] for word in words]
         words = [word for word in words if word != []]
@@ -81,13 +82,18 @@ class IGT:
     # endregion
 
 
-# Helper utils for splitting up glosses
-
-DEFAULT_WORD_REGEX = r"[\w?]+(?:[-=.\w?'/])*[\w?]+|\w"
+# If any of these are included in a word, count it
+WORD_WHITELIST = ["??", "'", "-"]
 
 
 def gloss_string_to_word_glosses(gloss_string: str) -> List[str]:
-    return re.findall(DEFAULT_WORD_REGEX, gloss_string)
+    words = gloss_string.split()
+
+    def _allowed_word(w: str):
+        return re.fullmatch(r"\p{P}+", w) is None or any(s in w for s in WORD_WHITELIST)
+
+    words = [w for w in words if _allowed_word(w)]
+    return words
 
 
 def gloss_string_to_morpheme_glosses(gloss_string: str) -> List[str]:

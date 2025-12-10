@@ -29,7 +29,6 @@ def bleu_score(
 
     # 1. Compute modified n-gram precisions
     all_precisions: list[float] = []
-    smooth_value = 1.0
     for ngram_order in range(1, max_ngram_order + 1):
         # For computing precision
         n_gram_matches = 0
@@ -54,17 +53,14 @@ def bleu_score(
         # No candidate grams, either we predicted badly or the n is bigger than the refs
         if total_candidate_grams == 0:
             if found_reference_ngram:
-                all_precisions.append(0)
-            break
+                all_precisions.append(1e-9)
+            continue
 
-        if n_gram_matches == 0:
-            smooth_value *= 2
-            precision = 100.0 / (smooth_value * total_candidate_grams)
-        else:
-            precision = 100.0 * n_gram_matches / total_candidate_grams
+        # Chen & Cherry smoothing
+        precision = (n_gram_matches + 1) / (total_candidate_grams + 1)
         all_precisions.append(precision)
 
-    mean_precision = min(geometric_mean(all_precisions), 100)
+    mean_precision = min(geometric_mean(all_precisions), 1)
 
     # 2. Compute brevity penalty
     candidate_corpus_length = sum((len(c) for c in candidates))
