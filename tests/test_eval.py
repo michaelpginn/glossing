@@ -11,7 +11,7 @@ class TestEval(unittest.TestCase):
         )
         self.assertEqual(metrics["morphemes"]["accuracy"]["micro"], 1)
         self.assertEqual(metrics["morphemes"]["accuracy"]["macro"], 1)
-        self.assertEqual(metrics["morphemes"]["bleu"], 100)
+        self.assertEqual(metrics["morphemes"]["bleu"], 1)
         self.assertEqual(metrics["morphemes"]["error_rate"], 0)
 
     def test_incorrect_eval(self):
